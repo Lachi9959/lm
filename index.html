@@ -309,6 +309,15 @@
         </div>
     </section>
 
+  <!-- Assignment Submission Popup -->
+  <div id="assignment-submit-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-60">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full text-center shadow-lg">
+      <h3 class="text-lg font-semibold mb-4">Assignment Submitted!</h3>
+      <p class="mb-6">You have successfully submitted the assignment concept explanation.</p>
+      <button onclick="closeAssignmentPopup()" class="px-5 py-2 bg-edulink rounded text-white hover:bg-green-600">OK</button>
+    </div>
+  </div>
+
   <!-- Auth Modal (Login/Register simulated) -->
  <div id="auth-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
   <div class="bg-white rounded-2xl shadow-xl w-96 p-6 relative animate-fadeIn">
@@ -439,11 +448,11 @@ const mock = {
     { userId: 'u_student_3', courseId: 'c12', progress: 0, completedLessons: [] }
   ],
   assignments: [
-    { id: 'a1', courseId: 'c1', userId: 'u_student_1', title: 'Algebra Homework', dueDate: '2025-10-20', status: 'Pending' },
-    { id: 'a2', courseId: 'c2', userId: 'u_student_1', title: 'Python Functions Quiz', dueDate: '2025-10-18', status: 'Pending' },
-    { id: 'a3', courseId: 'c3', userId: 'u_student_1', title: 'Kinematics Problems', dueDate: '2025-10-22', status: 'Pending' },
-    { id: 'a4', courseId: 'c11', userId: 'u_student_2', title: 'Flexbox Layout Challenge', dueDate: '2025-10-25', status: 'Pending' },
-    { id: 'a5', courseId: 'c12', userId: 'u_student_3', title: 'Essay on Plato\'s Republic', dueDate: '2025-10-30', status: 'Pending' }
+    { id: 'a1', courseId: 'c1', userId: 'u_student_1', title: 'Algebra Homework', dueDate: '2025-10-20', status: 'Pending', questionsCount: 10 },
+    { id: 'a2', courseId: 'c2', userId: 'u_student_1', title: 'Python Functions Quiz', dueDate: '2025-10-18', status: 'Pending', questionsCount: 5 },
+    { id: 'a3', courseId: 'c3', userId: 'u_student_1', title: 'Kinematics Problems', dueDate: '2025-10-22', status: 'Pending', questionsCount: 7 },
+    { id: 'a4', courseId: 'c11', userId: 'u_student_2', title: 'Flexbox Layout Challenge', dueDate: '2025-10-25', status: 'Pending', questionsCount: 8 },
+    { id: 'a5', courseId: 'c12', userId: 'u_student_3', title: 'Essay on Plato\'s Republic', dueDate: '2025-10-30', status: 'Pending', questionsCount: 12 }
   ],
   feedback: [
     { id: 'f1', courseId: 'c1', userId: 'u_student_1', from: 'Dr. Priya Rao', text: 'Great work on the last test! Keep it up.', rating: 4.5 },
@@ -494,6 +503,10 @@ function showToast(message, type = 'success'){
 
 function showLoading(show = true){
   document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+}
+
+function closeAssignmentPopup() {
+  document.getElementById('assignment-submit-popup').classList.add('hidden');
 }
 
 async function handleFeedback(event) {
@@ -870,11 +883,27 @@ async function enroll(courseId){
    =========================== */
 function handleAssignmentSubmit(event, assignmentId) {
   event.preventDefault();
+  const form = event.target;
   const assignment = state.assignments.find(a => a.id === assignmentId);
+  const concept = form.elements.concept.value;
+  const file = form.elements.assignmentFile.files[0];
+
+  if (!concept.trim()) {
+    alert('Please enter the concept explanation (up to 500 letters).');
+    return;
+  }
+
+  if (!file) {
+      alert('Please select a file to upload.');
+      return;
+  }
+
   if (assignment) {
     assignment.status = 'Submitted';
-    assignment.submittedFile = event.target.querySelector('input[type="file"]').files[0].name;
-    showToast('Assignment submitted successfully!');
+    assignment.submittedFile = file.name;
+    assignment.concept = concept;
+    document.getElementById('assignment-submit-popup').classList.remove('hidden');
+    form.reset();
     renderStudentDashboard();
   } else {
     showToast('Error submitting assignment', 'error');
@@ -925,11 +954,13 @@ function renderStudentDashboard() {
           <div class="font-semibold text-sm">${a.title}</div>
           <div class="text-xs text-gray-500">Due: ${a.dueDate} | ${course.title}</div>
         </div>
-        <button class="text-xs bg-blue-500 text-white px-3 py-1 rounded" onclick="this.nextElementSibling.classList.toggle('hidden')">Submit</button>
+        <button class="text-xs bg-blue-500 text-white px-3 py-1 rounded" onclick="this.parentElement.nextElementSibling.classList.toggle('hidden')">Submit</button>
       </div>
       <div class="hidden mt-3 pt-3 border-t">
         <form onsubmit="handleAssignmentSubmit(event, '${a.id}')">
-          <input type="file" class="text-sm w-full" required>
+          <p class="text-gray-500 text-xs mb-4"> ${a.questionsCount} Marks</p>
+          <textarea name="concept" placeholder="Write your concept explanation here (max 500 letters)" maxlength="500" rows="6" class="p-3 border border-gray-300 rounded resize-y w-full mb-4"></textarea>
+          <input type="file" name="assignmentFile" class="text-sm w-full" required>
           <button type="submit" class="mt-2 w-full text-sm bg-edulink text-white px-3 py-2 rounded">Upload & Submit</button>
         </form>
       </div>
@@ -949,6 +980,8 @@ function renderStudentDashboard() {
         <div class="font-semibold text-sm">${a.title}</div>
         <div class="text-xs text-gray-500 mb-2">${course.title}</div>
         <div class="text-sm p-2 rounded bg-gray-100">Status: <strong>${a.status}</strong></div>
+        ${a.concept ? `<div class="mt-2 text-sm p-2 rounded bg-gray-50"><strong>Concept:</strong> ${a.concept}</div>` : ''}
+        ${a.submittedFile ? `<div class="mt-2 text-sm p-2 rounded bg-gray-50"><strong>File:</strong> ${a.submittedFile}</div>` : ''}
         ${a.feedback ? `<div class="mt-2 text-sm p-2 rounded bg-green-50 border border-green-200"><strong>Feedback:</strong> ${a.feedback}</div>` : ''}
       `;
       submittedAssignmentsList.appendChild(item);
