@@ -103,9 +103,46 @@
     </div>
 
     <!-- Featured -->
-    <div>
+    <div class="mb-8">
       <h2 class="text-xl font-semibold mb-4">Featured Courses</h2>
       <div id="featured-courses" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+
+    <!-- Why Choose Us? -->
+    <div class="bg-white rounded-lg shadow p-8 mb-8">
+        <h2 class="text-2xl font-bold text-center mb-6">Why Choose EduLink?</h2>
+        <div class="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+                <div class="text-4xl text-edulink mb-2">🎓</div>
+                <h3 class="font-semibold mb-1">Expert Instructors</h3>
+                <p class="text-sm text-gray-600">Learn from the best in the industry.</p>
+            </div>
+            <div>
+                <div class="text-4xl text-edulink mb-2">📚</div>
+                <h3 class="font-semibold mb-1">Comprehensive Curriculum</h3>
+                <p class="text-sm text-gray-600">Courses designed to take you from beginner to pro.</p>
+            </div>
+            <div>
+                <div class="text-4xl text-edulink mb-2">🤝</div>
+                <h3 class="font-semibold mb-1">Supportive Community</h3>
+                <p class="text-sm text-gray-600">Join a network of learners and mentors.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials -->
+    <div>
+        <h2 class="text-2xl font-bold text-center mb-6">What Our Students Say</h2>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-600 mb-4">"EduLink has been a game-changer for my career. The courses are practical and the instructors are top-notch."</p>
+                <div class="font-semibold">- Aman Verma, Software Engineer</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-600 mb-4">"The flexibility to learn at my own pace was crucial. Highly recommend for working professionals."</p>
+                <div class="font-semibold">- Bhavna Singh, Product Manager</div>
+            </div>
+        </div>
     </div>
   </section>
 
@@ -169,6 +206,11 @@
         <div class="bg-white rounded p-4 shadow-sm">
           <h3 class="font-semibold mb-3">Upcoming Assignments</h3>
           <div id="student-assignments-list" class="space-y-3"></div>
+        </div>
+        <!-- Submitted Assignments -->
+        <div class="bg-white rounded p-4 shadow-sm">
+            <h3 class="font-semibold mb-3">Submitted Assignments</h3>
+            <div id="student-submitted-assignments-list" class="space-y-3"></div>
         </div>
         <!-- Quizzes -->
         <div class="bg-white rounded p-4 shadow-sm">
@@ -249,6 +291,11 @@
     <div class="mt-6 bg-white p-4 rounded-lg shadow">
         <h3 class="font-semibold mb-4">Student Feedback</h3>
         <div id="teacher-feedback-list" class="space-y-4"></div>
+    </div>
+    <!-- Submitted Assignments -->
+    <div class="mt-6 bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-4">Submitted Assignments</h3>
+        <div id="teacher-assignments-list" class="space-y-4"></div>
     </div>
   </section>
 
@@ -819,6 +866,19 @@ async function enroll(courseId){
 /* ===========================
    Student Dashboard
    =========================== */
+function handleAssignmentSubmit(event, assignmentId) {
+  event.preventDefault();
+  const assignment = state.assignments.find(a => a.id === assignmentId);
+  if (assignment) {
+    assignment.status = 'Submitted';
+    assignment.submittedFile = event.target.querySelector('input[type="file"]').files[0].name;
+    showToast('Assignment submitted successfully!');
+    renderStudentDashboard();
+  } else {
+    showToast('Error submitting assignment', 'error');
+  }
+}
+
 function renderStudentDashboard() {
   if (!state.currentUser || state.currentUser.role !== 'student') {
     document.getElementById('student-dashboard-page').innerHTML =
@@ -856,12 +916,40 @@ function renderStudentDashboard() {
   myAssignments.forEach(a => {
     const course = state.courses.find(c => c.id === a.courseId);
     const item = document.createElement('div');
-    item.className = 'p-2 border-l-4 border-accent rounded';
+    item.className = 'p-3 border rounded-lg';
     item.innerHTML = `
-      <div class="font-semibold text-sm">${a.title}</div>
-      <div class="text-xs text-gray-500">Due: ${a.dueDate} | ${course.title}</div>
+      <div class="flex justify-between items-center">
+        <div>
+          <div class="font-semibold text-sm">${a.title}</div>
+          <div class="text-xs text-gray-500">Due: ${a.dueDate} | ${course.title}</div>
+        </div>
+        <button class="text-xs bg-blue-500 text-white px-3 py-1 rounded" onclick="this.nextElementSibling.classList.toggle('hidden')">Submit</button>
+      </div>
+      <div class="hidden mt-3 pt-3 border-t">
+        <form onsubmit="handleAssignmentSubmit(event, '${a.id}')">
+          <input type="file" class="text-sm w-full" required>
+          <button type="submit" class="mt-2 w-full text-sm bg-edulink text-white px-3 py-2 rounded">Upload & Submit</button>
+        </form>
+      </div>
     `;
     assignmentsList.appendChild(item);
+  });
+
+  // Render Submitted Assignments
+  const submittedAssignmentsList = document.getElementById('student-submitted-assignments-list');
+  const mySubmittedAssignments = state.assignments.filter(a => a.userId === studentId && a.status !== 'Pending');
+  submittedAssignmentsList.innerHTML = mySubmittedAssignments.length === 0 ? '<p class="text-gray-500">No submitted assignments.</p>' : '';
+  mySubmittedAssignments.forEach(a => {
+      const course = state.courses.find(c => c.id === a.courseId);
+      const item = document.createElement('div');
+      item.className = 'p-3 border rounded-lg';
+      item.innerHTML = `
+        <div class="font-semibold text-sm">${a.title}</div>
+        <div class="text-xs text-gray-500 mb-2">${course.title}</div>
+        <div class="text-sm p-2 rounded bg-gray-100">Status: <strong>${a.status}</strong></div>
+        ${a.feedback ? `<div class="mt-2 text-sm p-2 rounded bg-green-50 border border-green-200"><strong>Feedback:</strong> ${a.feedback}</div>` : ''}
+      `;
+      submittedAssignmentsList.appendChild(item);
   });
 
   // Render Feedback
@@ -919,6 +1007,20 @@ function renderStudentDashboard() {
 /* ===========================
    Teacher Dashboard
    =========================== */
+function handleGradeSubmit(event, assignmentId) {
+  event.preventDefault();
+  const assignment = state.assignments.find(a => a.id === assignmentId);
+  const feedbackText = event.target.querySelector('textarea').value;
+  if (assignment) {
+    assignment.status = 'Graded';
+    assignment.feedback = feedbackText;
+    showToast('Feedback submitted successfully!');
+    renderTeacherDashboard();
+  } else {
+    showToast('Error submitting feedback', 'error');
+  }
+}
+
 function renderTeacherDashboard() {
   if (!state.currentUser || state.currentUser.role !== 'teacher') {
     document.getElementById('teacher-dashboard-page').innerHTML =
@@ -966,6 +1068,34 @@ function renderTeacherDashboard() {
     `;
         feedbackList.appendChild(item);
     });
+
+  // Render submitted assignments
+  const teacherAssignmentsList = document.getElementById('teacher-assignments-list');
+  const submittedAssignments = state.assignments.filter(a => myCourseIds.includes(a.courseId) && a.status === 'Submitted');
+  teacherAssignmentsList.innerHTML = submittedAssignments.length === 0 ? '<p class="text-gray-500">No submitted assignments.</p>' : '';
+  submittedAssignments.forEach(a => {
+    const course = state.courses.find(c => c.id === a.courseId);
+    const student = state.users.find(u => u.id === a.userId);
+    const item = document.createElement('div');
+    item.className = 'p-3 border rounded-lg';
+    item.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="font-semibold text-sm">${a.title}</div>
+          <div class="text-xs text-gray-500 mb-1">${student.name} | ${course.title}</div>
+          <a href="#" class="text-xs text-blue-500" onclick="alert('Downloading ${a.submittedFile}')">Download Submission</a>
+        </div>
+        <button class="text-xs bg-gray-200 px-3 py-1 rounded" onclick="this.nextElementSibling.classList.toggle('hidden')">Grade</button>
+      </div>
+      <div class="hidden mt-3 pt-3 border-t">
+        <form onsubmit="handleGradeSubmit(event, '${a.id}')">
+          <textarea placeholder="Leave feedback..." class="w-full border p-2 mb-2 rounded-md text-sm" required></textarea>
+          <button type="submit" class="w-full text-sm bg-edulink text-white px-3 py-2 rounded">Submit Feedback</button>
+        </form>
+      </div>
+    `;
+    teacherAssignmentsList.appendChild(item);
+  });
 }
 
 /* ===========================
