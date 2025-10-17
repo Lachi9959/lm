@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EduLink — Learning Management System (Demo)</title>
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind custom config
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            edulink: '#3DE13D',
+            accent: '#ff6b6b'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="chatbot.css">
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    /* simple glue for our SPA pages */
+    .page { display: none; }
+    .page.active { display: block; }
+    /* toast animation */
+    .toast-enter { transform: translateY(20px); opacity: 0; }
+    .toast-show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800">
+
+
+<!-- Sticky Header -->
+<header class="sticky top-0 z-40 bg-white shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('home-page')">
+          <div class="w-10 h-10 bg-edulink text-white rounded flex items-center justify-center font-bold">E</div>
+          <div class="hidden sm:block">
+            <div class="font-semibold">EduLink</div>
+            <div class="text-xs text-gray-500">Learn. Grow. Succeed.</div>
+          </div>
+        </div>
+        <nav class="hidden md:flex items-center gap-4 ml-6">
+          <a class="nav-link text-sm hover:text-edulink cursor-pointer" onclick="navigateTo('home-page')">Home</a>
+          <a class="nav-link text-sm hover:text-edulink cursor-pointer" onclick="navigateTo('courses-page')">Courses</a>
+          <a id="my-dashboard-link" class="nav-link text-sm hover:text-edulink cursor-pointer" onclick="navigateTo('student-dashboard-page')">My Dashboard</a>
+        </nav>
+      </div>
+
+      <div id="header-user-area" class="flex items-center gap-3">
+        <!-- dynamic user area -->
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed right-4 bottom-6 z-50 space-y-2"></div>
+
+  <!-- Pages -->
+  <section id="home-page" class="page ">
+    <!-- Hero -->
+    <div class="bg-white rounded-lg shadow p-8 mb-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-center">
+        <div class="flex-1">
+          <h1 class="text-3xl md:text-4xl font-bold mb-3">Unlock Your Potential</h1>
+          <p class="text-gray-600 mb-6">World-class courses, expert instructors, personalised learning — all in one place.</p>
+          <div class="flex gap-2">
+            <input id="home-search" class="flex-1 px-4 py-3 border rounded-md shadow-sm" placeholder="Search courses, e.g. 'Physics'" />
+            <button class="px-5 py-3 rounded-md bg-edulink text-white font-medium" onclick="searchFromHero()">Search</button>
+          </div>
+        </div>
+        <div class="w-full lg:w-1/3">
+          <div class="bg-gradient-to-tr from-edulink to-indigo-500 text-white rounded-lg p-6">
+            <h3 class="font-semibold">Why EduLink?</h3>
+            <ul class="mt-3 text-sm space-y-2">
+              <li>Structured curriculum</li>
+              <li>Expert teachers</li>
+              <li>Progress tracking & parental controls</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold mb-4">Course Categories</h2>
+      <div id="categories-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- Featured -->
+    <div>
+      <h2 class="text-xl font-semibold mb-4">Featured Courses</h2>
+      <div id="featured-courses" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+
+  <!-- Courses Page -->
+  <section id="courses-page" class="page">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <aside class="w-full lg:w-72 bg-white p-4 rounded shadow-sm">
+        <h3 class="font-semibold mb-3">Filters</h3>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Subject</label>
+          <select id="filter-subject" class="w-full border rounded px-3 py-2" onchange="renderCourses()">
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Grade Level</label>
+          <select id="filter-grade" class="w-full border rounded px-3 py-2" onchange="renderCourses()">
+            <option value="">All</option>
+            <option>Grade 8</option>
+            <option>Grade 9</option>
+            <option>Grade 10</option>
+            <option>Grade 11</option>
+            <option>Grade 12</option>
+            <option>UG</option>
+          </select>
+        </div>
+        <div>
+          <button class="w-full py-2 rounded bg-edulink text-white" onclick="resetFilters()">Reset Filters</button>
+        </div>
+      </aside>
+
+      <div class="flex-1">
+        <div class="mb-4 flex justify-between items-center">
+          <h2 class="text-xl font-semibold">All Courses</h2>
+          <div class="text-sm text-gray-500">Showing <span id="courses-count">0</span> courses</div>
+        </div>
+
+        <div id="courses-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Course Detail -->
+  <section id="course-detail-page" class="page">
+    <div class="bg-white rounded p-6 shadow-sm">
+      <div id="course-detail-content"></div>
+    </div>
+  </section>
+
+  <!-- Student Dashboard -->
+  <section id="student-dashboard-page" class="page">
+    <h2 class="text-2xl font-semibold mb-4">Student Dashboard</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <!-- My Courses -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">My Courses</h3>
+          <div id="my-courses-list" class="space-y-4"></div>
+        </div>
+        <!-- Assignments -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">Upcoming Assignments</h3>
+          <div id="student-assignments-list" class="space-y-3"></div>
+        </div>
+        <!-- Quizzes -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">Available Quizzes</h3>
+          <div id="student-quizzes-list" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Overall Progress -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">Overall Progress</h3>
+          <div id="student-overall-progress"></div>
+        </div>
+        <!-- Recent Feedback -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">Recent Feedback</h3>
+          <div id="student-feedback-list" class="space-y-3"></div>
+        </div>
+        <!-- Submit Feedback -->
+        <div class="bg-white rounded p-4 shadow-sm">
+          <h3 class="font-semibold mb-3">Submit Feedback</h3>
+          <form id="feedback-form" onsubmit="handleFeedback(event)">
+            <select id="feedback-course" class="w-full border p-2 mb-3 rounded-md" required></select>
+            <textarea id="feedback-text" placeholder="Your feedback..." class="w-full border p-2 mb-3 rounded-md" required></textarea>
+            <button type="submit" class="w-full bg-edulink text-white py-2 rounded-lg hover:bg-green-700">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Parent Dashboard -->
+  <section id="parent-dashboard-page" class="page">
+    <h2 class="text-2xl font-semibold mb-4">Parent Dashboard</h2>
+    <div class="bg-white rounded p-6 shadow-sm mb-6">
+      <div class="flex gap-4 items-center">
+        <input id="child-link-code" class="px-3 py-2 border rounded flex-1" placeholder="Enter child's link code" />
+        <button class="px-4 py-2 bg-edulink text-white rounded" onclick="linkChild()">Link Child</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white rounded p-4 shadow-sm">
+        <h3 class="font-semibold mb-3">Linked Children</h3>
+        <div id="linked-children-area"></div>
+      </div>
+
+      <div class="bg-white rounded p-4 shadow-sm">
+        <h3 class="font-semibold mb-3">Weekly Summary</h3>
+        <div id="parent-weekly-summary"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teacher Dashboard -->
+  <section id="teacher-dashboard-page" class="page">
+    <h2 class="text-2xl font-semibold mb-4">Teacher Dashboard</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Summary Cards -->
+      <div class="md:col-span-1 space-y-6">
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h3 class="font-semibold text-gray-600">Total Courses</h3>
+          <p id="teacher-total-courses" class="text-3xl font-bold text-edulink">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h3 class="font-semibold text-gray-600">Total Students</h3>
+          <p id="teacher-total-students" class="text-3xl font-bold text-accent">0</p>
+        </div>
+      </div>
+      <!-- My Courses List -->
+      <div class="md:col-span-2 bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-4">My Courses</h3>
+        <div id="teacher-courses-list" class="space-y-4"></div>
+      </div>
+    </div>
+    <!-- Student Feedback -->
+    <div class="mt-6 bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-4">Student Feedback</h3>
+        <div id="teacher-feedback-list" class="space-y-4"></div>
+    </div>
+  </section>
+
+  <!-- Quiz Page -->
+    <section id="quiz-page" class="page">
+        <h2 class="text-2xl font-semibold mb-4">Quiz</h2>
+        <div class="bg-white rounded p-6 shadow-sm">
+            <div id="quiz-content"></div>
+        </div>
+    </section>
+
+  <!-- Auth Modal (Login/Register simulated) -->
+ <div id="auth-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
+  <div class="bg-white rounded-2xl shadow-xl w-96 p-6 relative animate-fadeIn">
+    <div class="flex justify-center mb-4">
+
+      <button id="login-tab" class="px-4 py-2 text-blue-600 font-semibold border-b-2 border-blue-600" onclick="toggleAuthMode('login')">Login</button>
+      <button id="register-tab" class="px-4 py-2 text-gray-500" onclick="toggleAuthMode('register')">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <input type="email" id="login-email" placeholder="Email" class="w-full border p-2 mb-3 rounded-md" required>
+      <input type="password" id="login-password" placeholder="Password" class="w-full border p-2 mb-3 rounded-md" required>
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form" onsubmit="handleRegister(event)" class="hidden">
+      <input type="text" id="register-name" placeholder="Full Name" class="w-full border p-2 mb-3 rounded-md" required>
+      <input type="email" id="register-email" placeholder="Email" class="w-full border p-2 mb-3 rounded-md" required>
+      <input type="password" id="register-password" placeholder="Password" class="w-full border p-2 mb-3 rounded-md" required>
+      <select id="register-role" class="w-full border p-2 mb-4 rounded-md">
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+        <option value="parent">Parent</option>
+      </select>
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Register</button>
+    </form>
+
+    <button onclick="closeAuthModal()" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-lg">&times;</button>
+  </div>
+</div>
+
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow flex items-center gap-3">
+      <svg class="animate-spin h-6 w-6 text-edulink" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+      <div>Loading...</div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="bg-white shadow-sm mt-8">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">EduLink</h3>
+                <p class="mt-2 text-gray-500 text-sm">Learn. Grow. Succeed.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Quick Links</h3>
+                <ul class="mt-2 space-y-2">
+                    <li><a href="#" class="text-sm text-gray-500 hover:text-edulink" onclick="navigateTo('home-page')">Home</a></li>
+                    <li><a href="#" class="text-sm text-gray-500 hover:text-edulink" onclick="navigateTo('courses-page')">Courses</a></li>
+                    <li><a href="#" class="text-sm text-gray-500 hover:text-edulink" onclick="navigateTo('About Us')">About Us</a></li>
+                    <li><a href="#" class="text-sm text-gray-500 hover:text-edulink" onclick="navigateTo('About Us')">Privacy Policy</a></li>
+                    <li><a href="#" class="text-sm text-gray-500 hover:text-edulink" onclick="navigateTo('About Us')">Terms and conditions</a></li>
+
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Reach out to us</h3>
+                <p class="mt-2 text-sm text-gray-500">Get your questions answered about learning with EduLink.</p>
+                <p class="text-sm text-gray-500">📧:contact@edulink.com</p>
+            </div>
+        </div>
+        <div class="mt-8 border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
+            <p>&copy; 2025 EduLink. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ===========================
+   Configuration & Mock Data
+   =========================== */
+const API_BASE_URL = 'https://edulink-lms.onrender.com'; // <- replace with your backend
+
+// Mock dataset used when API calls fail or for demo
+const mock = {
+  users: [
+    { id: 'u_student_1', name: 'Aman Verma', email: 'aman@student.com', role: 'student', token: 'token_student_1', linkCode: 'STU1234' },
+    { id: 'u_student_2', name: 'Bhavna Singh', email: 'bhavna@student.com', role: 'student', token: 'token_student_2', linkCode: 'STU5678' },
+    { id: 'u_student_3', name: 'Chetan Kumar', email: 'chetan@student.com', role: 'student', token: 'token_student_3', linkCode: 'STU9012' },
+    { id: 'u_student_4', name: 'Divya Reddy', email: 'divya@student.com', role: 'student', token: 'token_student_4', linkCode: 'STU3456' },
+    { id: 'u_teacher_1', name: 'Dr. Priya Rao', email: 'priya@teacher.com', role: 'teacher', token: 'token_teacher_1' },
+    { id: 'u_parent_1', name: 'Rakesh Sharma', email: 'rakesh@parent.com', role: 'parent', token: 'token_parent_1', linkedChildren: [] }
+  ],
+  courses: [
+    { id: 'c1', title: 'Class 10 CBSE Maths', subject: 'Maths', grade: 'Grade 10', desc: 'Complete Class 10 mathematics with concept clarity and doubt solving.', instructor: 'Dr. Priya Rao', duration: '40 hrs', rating: 4.6, syllabus: ['Number Systems', 'Algebra', 'Coordinate Geometry', 'Trigonometry', 'Probability'], image_url: 'https://blog.careerlauncher.com/wp-content/uploads/2021/06/maths-chalkboard_23-2148178220.jpg', youtube_link: 'https://www.youtube.com/embed/p_di4Zn4wz4' },
+    { id: 'c2', title: 'Introduction to Python', subject: 'Computer Science', grade: 'UG', desc: 'Beginner friendly Python programming course.', instructor: 'Saket Kumar', duration: '20 hrs', rating: 4.7, syllabus: ['Variables', 'Control Flow', 'Functions', 'Data Structures', 'OOP'], image_url: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1332&q=80', youtube_link: 'https://www.youtube.com/embed/kqtD5dpn9C8' },
+    { id: 'c3', title: 'JEE Advanced Physics', subject: 'Physics', grade: 'Grade 12', desc: 'Advanced problem solving for JEE aspirants.', instructor: 'Ankit Mehra', duration: '60 hrs', rating: 4.8, syllabus: ['Mechanics', 'Electrodynamics', 'Optics', 'Modern Physics'], image_url: 'https://pragationline.com/wp-content/uploads/2023/08/IMG_20250924_0016.jpg', youtube_link: 'https://youtu.be/2i0p2tidN88?list=PLxyGaR3hEy3gvV4VbbP8pza7MtoJkGu6M&t=3' },
+    { id: 'c4', title: 'UPSC Modern Indian History', subject: 'History', grade: 'UG', desc: 'In-depth modern history for UPSC prelims & mains.', instructor: 'Dr. Sunita Nair', duration: '35 hrs', rating: 4.5, syllabus: ['Colonialism', 'Freedom Movement', 'Post-independence'], image_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-U0clVnF3vJI1uAHCvabDlfF53aMZwBAa8w&s', youtube_link: 'https://youtu.be/R1G4FbyHdkw?list=PLXLsXwBXH6BnNyxk8aLyei4NB8VtpjjXM' },
+    { id: 'c5', title: 'Class 12 CBSE Chemistry', subject: 'Chemistry', grade: 'Grade 12', desc: 'Clear concept and practice for board and competitive exams.', instructor: 'Pooja Singh', duration: '45 hrs', rating: 4.6, syllabus: ['Organic', 'Inorganic', 'Physical Chemistry'], image_url: 'https://images.unsplash.com/photo-1564325724739-bae0bd08762c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80', youtube_link: 'https://youtu.be/sBFgmwEEbQo?list=PLVLoWQFkZbhVdStvLVoS3kU7RBaJR4JTR' },
+    { id: 'c6', title: 'Data Structures & Algorithms', subject: 'Computer Science', grade: 'UG', desc: 'Core DSA for interviews and competitive coding.', instructor: 'Rohan Das', duration: '50 hrs', rating: 4.8, syllabus: ['Arrays', 'Linked Lists', 'Trees', 'Graphs', 'Sorting'], image_url: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80', youtube_link: 'https://www.youtube.com/embed/8hly31xKli0' },
+    { id: 'c7', title: 'Spoken English: Confidence & Fluency', subject: 'English', grade: 'UG', desc: 'Boost your spoken English skills and confidence.', instructor: 'Neha Kapoor', duration: '15 hrs', rating: 4.4, syllabus: ['Pronunciation', 'Vocabulary', 'Conversations'], image_url: 'https://d3jbu7vaxvlagf.cloudfront.net/small/v2/category_media/image_17252564665261.jpeg', youtube_link: 'https://youtu.be/vbUtkB6cHqQ' },
+    { id: 'c8', title: 'Foundation: Class 8 Maths', subject: 'Maths', grade: 'Grade 8', desc: 'Strong foundational course for middle schoolers.', instructor: 'Kumar Swamy', duration: '25 hrs', rating: 4.5, syllabus: ['Numbers', 'Geometry', 'Algebra basics'], image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80', youtube_link: 'https://youtu.be/Ona8p_RLJjI?list=PL37kVxuLUBb5l2iKOBCed3Aj-4R3EQbuO' },
+    { id: 'c9', title: 'Business Economics (UG)', subject: 'Economics', grade: 'UG', desc: 'Basic to intermediate micro & macro concepts.', instructor: 'Prof. Anita Bose', duration: '30 hrs', rating: 4.3, syllabus: ['Microeconomics', 'Macroeconomics'], image_url: 'https://images.unsplash.com/photo-1606857521015-7f9fcf423740?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80', youtube_link: 'https://www.youtube.com/embed/3ez10ADR_gM' },
+    { id: 'c10', title: 'Creative Writing Workshop', subject: 'Arts', grade: 'UG', desc: 'Develop storytelling & creative writing skills.', instructor: 'Meera Iyer', duration: '12 hrs', rating: 4.2, syllabus: ['Short stories', 'Poetry', 'Editing'], image_url: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1073&q=80', youtube_link: 'https://youtu.be/0cf-qdZ7GbA?list=PLSH_xM-KC3Zv-79sVZTTj-YA6IAqh8qeQ' },
+    { id: 'c11', title: 'Advanced CSS', subject: 'Computer Science', grade: 'UG', desc: 'Master modern CSS techniques like Flexbox, Grid, and animations.', instructor: 'Rohan Das', duration: '25 hrs', rating: 4.7, syllabus: ['Flexbox', 'Grid', 'Animations', 'Responsive Design', 'Sass'], image_url: 'https://res.cloudinary.com/dz209s6jk/image/upload/v1718110916/LearningPaths/oexupgyyuusnkigeifms.jpg', youtube_link: 'https://youtu.be/PVBqZRAOZL8?list=PLhzIaPMgkbxBk9-drEC0MBPqEOXpVlwY4' },
+    { id: 'c12', title: 'Introduction to Philosophy', subject: 'Humanities', grade: 'UG', desc: 'Explore the fundamental questions of existence, knowledge, values, reason, mind, and language.', instructor: 'Dr. Sunita Nair', duration: '30 hrs', rating: 4.4, syllabus: ['Metaphysics', 'Epistemology', 'Ethics', 'Logic', 'Ancient Philosophy'], image_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP6sBqcoYo69jlwN1ll4nd9Avp1xHpCvu2Ag&s', youtube_link: 'https://www.youtube.com/embed/1A_CAkYt3GY' },
+{
+  id: 'c13',
+  title: 'Advanced: Class 9 Maths',
+  subject: 'Maths',
+  grade: 'Grade 9',
+  desc: 'Comprehensive mathematics course covering advanced concepts for high school beginners.',
+  instructor: 'Kumar Swamy',
+  duration: '30 hrs',
+  rating: 4.7,
+  syllabus: ['Polynomials', 'Coordinate Geometry', 'Linear Equations', 'Statistics', 'Probability'],
+  image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+  youtube_link: 'https://youtu.be/OmJ-4B-mS-Y'
+},
+
+
+  ],
+  enrollments: [
+    { userId: 'u_student_1', courseId: 'c1', progress: 0.75, completedLessons: ['Number Systems', 'Algebra', 'Coordinate Geometry'] },
+    { userId: 'u_student_1', courseId: 'c2', progress: 0.5, completedLessons: ['Variables', 'Control Flow'] },
+    { userId: 'u_student_1', courseId: 'c3', progress: 0.25, completedLessons: ['Mechanics'] },
+    { userId: 'u_student_2', courseId: 'c1', progress: 0.5, completedLessons: ['Number Systems', 'Algebra'] },
+    { userId: 'u_student_3', courseId: 'c1', progress: 0.25, completedLessons: ['Number Systems'] },
+    { userId: 'u_student_4', courseId: 'c5', progress: 0.5, completedLessons: ['Organic', 'Inorganic'] },
+    { userId: 'u_student_2', courseId: 'c11', progress: 0.1, completedLessons: [] },
+    { userId: 'u_student_3', courseId: 'c12', progress: 0, completedLessons: [] }
+  ],
+  assignments: [
+    { id: 'a1', courseId: 'c1', userId: 'u_student_1', title: 'Algebra Homework', dueDate: '2025-10-20', status: 'Pending' },
+    { id: 'a2', courseId: 'c2', userId: 'u_student_1', title: 'Python Functions Quiz', dueDate: '2025-10-18', status: 'Pending' },
+    { id: 'a3', courseId: 'c3', userId: 'u_student_1', title: 'Kinematics Problems', dueDate: '2025-10-22', status: 'Pending' },
+    { id: 'a4', courseId: 'c11', userId: 'u_student_2', title: 'Flexbox Layout Challenge', dueDate: '2025-10-25', status: 'Pending' },
+    { id: 'a5', courseId: 'c12', userId: 'u_student_3', title: 'Essay on Plato\'s Republic', dueDate: '2025-10-30', status: 'Pending' }
+  ],
+  feedback: [
+    { id: 'f1', courseId: 'c1', userId: 'u_student_1', from: 'Dr. Priya Rao', text: 'Great work on the last test! Keep it up.', rating: 4.5 },
+    { id: 'f2', courseId: 'c2', userId: 'u_student_1', from: 'Saket Kumar', text: 'Your code is clean, but remember to add more comments.' }
+  ],
+  activities: [
+    { userId: 'u_student_1', courseId: 'c2', text: 'Completed lesson: Control Flow', time: Date.now() - 2*3600*1000 }
+  ],
+  quizzes: [
+    { id: 'q1', courseId: 'c1', title: 'Algebra Basics Quiz', questions: [
+      { q: 'What is 2 + 2?', options: ['3', '4', '5'], answer: '4' },
+      { q: 'What is x in x + 5 = 10?', options: ['3', '4', '5'], answer: '5' }
+    ]},
+    { id: 'q2', courseId: 'c2', title: 'Python Variables Quiz', questions: [
+      { q: 'Which is a valid variable name?', options: ['my-var', 'my_var', '2var'], answer: 'my_var' },
+      { q: 'What is the type of "Hello"?', options: ['int', 'str', 'bool'], answer: 'str' }
+    ]}
+  ]
+};
+
+/* ===========================
+   App State
+   =========================== */
+let state = {
+  currentUser: null, // { id, name, role, token }
+  courses: [],
+  users: [],
+  enrollments: [],
+  assignments: [],
+  feedback: [],
+  activities: [],
+  quizzes: [],
+  linkedChildren: {} // parentId -> [childUserId]
+};
+
+/* ===========================
+   Utilities: Toast, Loading
+   =========================== */
+function showToast(message, type = 'success'){
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'max-w-sm px-4 py-3 rounded shadow-sm border transform transition-all duration-300 ease-out bg-white';
+  el.innerHTML = `<div class=\"flex items-center justify-between gap-4\"><div class=\"text-sm\">${message}</div><div class=\"text-xs text-gray-400 cursor-pointer\">✕</div></div>`;
+  container.appendChild(el);
+  el.querySelector('div div:last-child').onclick = () => el.remove();
+  setTimeout(()=>{ el.remove(); }, 5000);
+}
+
+function showLoading(show = true){
+  document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+}
+
+async function handleFeedback(event) {
+  event.preventDefault();
+  const courseId = document.getElementById('feedback-course').value;
+  const text = document.getElementById('feedback-text').value.trim();
+  if (!courseId || !text) {
+    showToast('Please select a course and enter feedback', 'error');
+    return;
+  }
+  const course = state.courses.find(c => c.id === courseId);
+  const feedback = {
+    id: 'f' + (mock.feedback.length + 1),
+    courseId,
+    userId: state.currentUser.id,
+    from: state.currentUser.name,
+    text,
+  };
+  mock.feedback.push(feedback);
+  showToast('Feedback submitted successfully!');
+  document.getElementById('feedback-form').reset();
+  renderStudentDashboard();
+}
+
+/* ===========================
+   Simple local API wrapper (tries backend, falls back to mock)
+   =========================== */
+async function apiFetch(path, opts = {}){
+  const url = (API_BASE_URL || 'https://edulink-lms.onrender.com').replace(/\/$/, '') + path;
+  // attach token if present
+  const token = localStorage.getItem('edulink_token');
+  opts.headers = opts.headers || {};
+  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+
+  try {
+    // when API_BASE_URL is not configured, throw to go to mock
+    if(!API_BASE_URL || API_BASE_URL === 'https://edulink-lms.onrender.com') throw new Error('No API configured');
+    showLoading(true);
+    const res = await fetch(url, opts);
+    showLoading(false);
+    if(!res.ok) throw new Error('Network error');
+    return await res.json();
+  } catch(err){
+    // fallback to mock behaviour for demo
+    // console.warn('API failed, using mock:', err.message);
+    return mockFallback(path, opts);
+  } finally{ showLoading(false); }
+}
+
+function mockFallback(path, opts){
+  // simulate endpoints for demo only
+  if(path.startsWith('/courses')){
+    return Promise.resolve({ success: true, data: mock.courses });
+  }
+  if(path.startsWith('/course/')){
+    const id = path.split('/').pop();
+    const course = mock.courses.find(c => c.id === id);
+    return Promise.resolve({ success: !!course, data: course });
+  }
+  if(path.startsWith('/auth/login')){
+    // simple email lookup
+    const body = opts.body ? JSON.parse(opts.body) : {};
+    const user = mock.users.find(u => u.email === body.email);
+    if(user) return { success: true, data: { token: user.token, user } };
+    return { success: false, error: 'Invalid credentials' };
+  }
+  if(path.startsWith('/auth/register')){
+    const body = opts.body ? JSON.parse(opts.body) : {};
+    const id = 'u_' + Math.random().toString(36).slice(2,9);
+    const token = 'token_' + Math.random().toString(36).slice(2,12);
+    const newUser = { id, name: body.name, email: body.email, role: body.role, token, linkCode: 'STU' + Math.floor(1000+Math.random()*9000) };
+    mock.users.push(newUser);
+    return { success:true, data: { token, user: newUser } };
+  }
+  if(path.startsWith('/enroll')){
+    const body = opts.body ? JSON.parse(opts.body) : {};
+    mock.enrollments.push({ userId: body.userId, courseId: body.courseId, progress: 0, completedLessons: [] });
+    return { success: true };
+  }
+  if(path.startsWith('/me')){
+    const token = opts.headers && opts.headers['Authorization'] ? opts.headers['Authorization'].replace('Bearer ','') : null;
+    const user = mock.users.find(u => u.token === token);
+    if(user) return { success: true, data: user };
+    return { success: false, error: 'Unauthorized' };
+  }
+  return { success: false, error: 'Unknown mock path' };
+}
+
+/* ===========================
+   Auth (login/register/logout)
+   =========================== */
+function openAuthModal(mode = 'login') {
+  document.getElementById('auth-modal').style.display = 'flex';
+  toggleAuthMode(mode);
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!email || !password) {
+    showToast('Please enter email and password', 'error');
+    return;
+  }
+  const res = await apiFetch('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  if (res.success) {
+    localStorage.setItem('edulink_token', res.data.token);
+    state.currentUser = res.data.user;
+    renderHeaderUser();
+    showToast('Logged in as ' + res.data.user.name);
+    closeAuthModal();
+    if (res.data.user.role === 'student') {
+      navigateTo('student-dashboard-page');
+    } else if (res.data.user.role === 'teacher') {
+      navigateTo('teacher-dashboard-page');
+    } else if (res.data.user.role === 'parent') {
+      navigateTo('parent-dashboard-page');
+    }
+  } else {
+    showToast(res.error || 'Login failed', 'error');
+  }
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+  const name = document.getElementById('register-name').value.trim();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value.trim();
+  const role = document.getElementById('register-role').value;
+  const res = await apiFetch('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password, role }),
+  });
+  if (res.success) {
+    localStorage.setItem('edulink_token', res.data.token);
+    state.currentUser = res.data.user;
+    renderHeaderUser();
+    showToast('Registered & logged in as ' + res.data.user.name);
+    closeAuthModal();
+    if (res.data.user.role === 'student') {
+      navigateTo('student-dashboard-page');
+    } else if (res.data.user.role === 'teacher') {
+      navigateTo('teacher-dashboard-page');
+    } else if (res.data.user.role === 'parent') {
+      navigateTo('parent-dashboard-page');
+    }
+  } else {
+    showToast(res.error || 'Registration failed', 'error');
+  }
+}
+
+function closeAuthModal(){
+  document.getElementById('auth-modal').style.display = 'none';
+}
+
+function logout(){
+  localStorage.removeItem('edulink_token');
+  state.currentUser = null;
+  renderHeaderUser();
+  showToast('Logged out');
+  navigateTo('home-page');
+}
+
+async function tryRestoreSession(){
+  const token = localStorage.getItem('edulink_token');
+  if(!token) return;
+  const res = await apiFetch('/me', { headers: { 'Authorization': token } });
+  if(res && res.success){ state.currentUser = res.data; renderHeaderUser(); }
+  else { localStorage.removeItem('edulink_token'); }
+}
+
+/* ===========================
+   Navigation & Rendering
+   =========================== */
+function navigateTo(pageId){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0,0);
+  // lazy render certain pages
+  if(pageId === 'home-page') renderHome();
+  if(pageId === 'courses-page') renderCourses();
+  if(pageId === 'student-dashboard-page') renderStudentDashboard();
+  if(pageId === 'teacher-dashboard-page') renderTeacherDashboard();
+  if(pageId === 'parent-dashboard-page') renderParentDashboard();
+}
+
+function renderHeaderUser() {
+  const area = document.getElementById('header-user-area');
+  const dashboardLink = document.getElementById('my-dashboard-link');
+  area.innerHTML = '';
+
+  if (!state.currentUser) {
+    dashboardLink.style.display = 'none';
+    const loginBtn = document.createElement('button');
+    loginBtn.className = 'px-4 py-2 rounded border';
+    loginBtn.innerText = 'Login';
+    loginBtn.onclick = () => openAuthModal('login');
+    const signupBtn = document.createElement('button');
+    signupBtn.className = 'px-4 py-2 rounded bg-edulink text-white';
+    signupBtn.innerText = 'Sign Up';
+    signupBtn.onclick = () => openAuthModal('register');
+    area.appendChild(loginBtn);
+    area.appendChild(signupBtn);
+  } else {
+    dashboardLink.style.display = 'inline-block';
+    if (state.currentUser.role === 'student') {
+      dashboardLink.onclick = () => navigateTo('student-dashboard-page');
+    } else if (state.currentUser.role === 'teacher') {
+      dashboardLink.onclick = () => navigateTo('teacher-dashboard-page');
+    } else if (state.currentUser.role === 'parent') {
+      dashboardLink.onclick = () => navigateTo('parent-dashboard-page');
+    }
+
+    const name = document.createElement('div');
+    name.className = 'text-sm mr-2 hidden md:block';
+    name.innerText = state.currentUser.name + ' (' + state.currentUser.role + ')';
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'px-3 py-2 rounded border';
+    logoutBtn.innerText = 'Logout';
+    logoutBtn.onclick = logout;
+    area.appendChild(name);
+    area.appendChild(logoutBtn);
+  }
+}
+
+/* ===========================
+   Home Page Render
+   =========================== */
+async function renderHome(){
+  // categories
+  const categories = Array.from(new Set(mock.courses.map(c => c.subject))).slice(0,8);
+  const catEl = document.getElementById('categories-list');
+  catEl.innerHTML = '';
+  categories.forEach(sub => {
+    const d = document.createElement('div');
+    d.className = 'bg-white rounded p-4 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md';
+    d.onclick = ()=>{ document.getElementById('filter-subject').value = sub; navigateTo('courses-page'); renderCourses(); };
+    d.innerHTML = `<div class='w-12 h-12 rounded bg-gray-100 flex items-center justify-center font-semibold text-edulink'>${sub[0]}</div><div><div class='font-semibold'>${sub}</div><div class='text-sm text-gray-500'>${mock.courses.filter(c=>c.subject===sub).length} courses</div></div>`;
+    catEl.appendChild(d);
+  });
+
+  // featured courses
+  const featured = mock.courses.slice(0,3);
+  const featEl = document.getElementById('featured-courses');
+  featEl.innerHTML = '';
+  featured.forEach(c => featEl.appendChild(createCourseCard(c)));
+}
+
+function createCourseCard(course){
+  const div = document.createElement('div');
+  div.className = 'bg-white rounded-lg shadow-sm flex flex-col h-full overflow-hidden';
+  div.innerHTML = `
+    <img src="${course.image_url || 'https://via.placeholder.com/400x200'}" alt="${course.title}" class="w-full h-40 object-cover">
+    <div class="p-4 flex flex-col flex-1">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <h3 class="font-semibold text-base">${course.title}</h3>
+          <div class="text-xs text-gray-500">${course.instructor} • ${course.duration}</div>
+        </div>
+        <div class="text-sm font-bold text-edulink flex-shrink-0">${course.rating}★</div>
+      </div>
+      <p class="text-sm text-gray-600 mb-4 flex-1">${course.desc}</p>
+      <div class="mt-auto">
+        <button class="px-3 py-2 rounded bg-edulink text-white w-full text-sm" onclick="openCourseDetail('${course.id}')">View Course</button>
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+/* ===========================
+   Courses Page
+   =========================== */
+async function renderCourses(){
+  const res = await apiFetch('/courses');
+  const courses = (res && res.data) ? res.data : mock.courses;
+  state.courses = courses;
+  const subjectFilter = document.getElementById('filter-subject').value;
+  const gradeFilter = document.getElementById('filter-grade').value;
+  // populate subject select
+  const subjectSelect = document.getElementById('filter-subject');
+  subjectSelect.innerHTML = '<option value="">All</option>' + Array.from(new Set(courses.map(c=>c.subject))).map(s=>`<option>${s}</option>`).join('');
+
+  let filtered = courses.filter(c => {
+    if(subjectFilter && c.subject !== subjectFilter) return false;
+    if(gradeFilter && c.grade !== gradeFilter) return false;
+    return true;
+  });
+
+  const list = document.getElementById('courses-list');
+  list.innerHTML = '';
+  document.getElementById('courses-count').innerText = filtered.length;
+  filtered.forEach(c => list.appendChild(createCourseCard(c)));
+}
+
+function resetFilters(){
+  document.getElementById('filter-subject').value = '';
+  document.getElementById('filter-grade').value = '';
+  renderCourses();
+}
+
+/* ===========================
+   Course Detail
+   =========================== */
+async function openCourseDetail(courseId){
+  navigateTo('course-detail-page');
+  const res = await apiFetch('/course/' + courseId);
+  const course = (res && res.data) ? res.data : mock.courses.find(c=>c.id===courseId);
+  renderCourseDetail(course);
+}
+
+function renderCourseDetail(course){
+  const container = document.getElementById('course-detail-content');
+  container.innerHTML = '';
+  if(!course) { container.innerHTML = '<div class="text-red-500">Course not found</div>'; return; }
+
+  const enrolled = state.currentUser && mock.enrollments.find(e => e.userId === (state.currentUser && state.currentUser.id) && e.courseId === course.id);
+
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div class="flex flex-col lg:flex-row gap-6">
+      <div class="flex-1">
+        <h1 class="text-2xl font-bold">${course.title}</h1>
+        <div class="text-sm text-gray-500 mb-3">${course.instructor} • ${course.duration} • ${course.rating}★</div>
+        <p class="text-gray-700 mb-4">${course.desc}</p>
+        <h3 class="font-semibold mb-2">Syllabus</h3>
+        <ul class="list-disc pl-5 text-sm text-gray-700 mb-4">${course.syllabus.map(s => `<li>${s}</li>`).join('')}</ul>
+        ${enrolled ? '<div class="mb-4 p-3 bg-green-50 rounded">You are enrolled in this course.</div>' : ''}
+        <div class="flex gap-2">
+          ${enrolled ? `<button class='px-4 py-2 rounded border' onclick="navigateTo('student-dashboard-page')">Go to Dashboard</button>` : `<button class='px-4 py-2 rounded bg-edulink text-white' onclick="enroll('${course.id}')">Enroll Now</button>`}
+          <button class='px-4 py-2 rounded border' onclick="navigateTo('courses-page')">Back to Courses</button>
+        </div>
+      </div>
+      <div class="w-full lg:w-96 bg-gray-50 p-4 rounded">
+        ${enrolled ? `<div class='mb-4'><div class='font-semibold mb-2'>Course Player</div><div class='aspect-w-16 aspect-h-9'><iframe src="${course.youtube_link}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div><div><h4 class='font-semibold mb-2'>Lessons</h4><div id='lessons-list'>${course.syllabus.map((s,i)=>`<div class='flex items-center gap-2 mb-2'><input type='checkbox' ${enrolled.completedLessons && enrolled.completedLessons.includes(s) ? 'checked' : ''} onchange="toggleLesson('${course.id}', ${i})"/> <div class='text-sm'>${s}</div></div>`).join('')}</div></div>` : `<div class='text-sm text-gray-600'>Enroll to access lessons and the video player.</div>`}
+        <div class='mt-4'><h4 class='font-semibold mb-2'>3D Model</h4><model-viewer src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" alt="A 3D model of an astronaut" auto-rotate camera-controls></model-viewer></div>
+      </div>
+    </div>
+  `;
+  container.appendChild(el);
+}
+
+function toggleLesson(courseId, lessonIndex){
+  // for demo modify mock enrollments
+  const course = mock.courses.find(c=>c.id===courseId);
+  const lesson = course.syllabus[lessonIndex];
+  const e = mock.enrollments.find(en => en.userId === (state.currentUser && state.currentUser.id) && en.courseId === courseId);
+  if(!e) return;
+  const idx = e.completedLessons.indexOf(lesson);
+  if(idx === -1) e.completedLessons.push(lesson); else e.completedLessons.splice(idx,1);
+  e.progress = e.completedLessons.length / course.syllabus.length;
+  showToast('Lesson progress updated');
+  renderStudentDashboard();
+}
+
+/* ===========================
+   Enrollment
+   =========================== */
+async function enroll(courseId){
+  if(!state.currentUser){ showToast('Please login to enroll', 'error'); openAuthModal('login'); return; }
+  const res = await apiFetch('/enroll', { method: 'POST', body: JSON.stringify({ userId: state.currentUser.id, courseId }) });
+  if(res && res.success){
+    mock.enrollments.push({ userId: state.currentUser.id, courseId, progress: 0, completedLessons: [] });
+    showToast('Enrollment successful!');
+    renderStudentDashboard();
+  } else showToast('Enrollment failed', 'error');
+}
+
+/* ===========================
+   Student Dashboard
+   =========================== */
+function renderStudentDashboard() {
+  if (!state.currentUser || state.currentUser.role !== 'student') {
+    document.getElementById('student-dashboard-page').innerHTML =
+      '<div class="text-red-500">Please login as a student to view this dashboard.</div>';
+    return;
+  }
+
+  const studentId = state.currentUser.id;
+  const coursesList = document.getElementById('my-courses-list');
+  const assignmentsList = document.getElementById('student-assignments-list');
+  const feedbackList = document.getElementById('student-feedback-list');
+  const overallProgress = document.getElementById('student-overall-progress');
+
+  // Render Courses
+  const myEnrolls = state.enrollments.filter(e => e.userId === studentId);
+  coursesList.innerHTML = myEnrolls.length === 0 ? '<p class="text-gray-500">No courses enrolled yet.</p>' : '';
+  myEnrolls.forEach(en => {
+    const course = state.courses.find(c => c.id === en.courseId);
+    const card = document.createElement('div');
+    card.className = 'p-3 border rounded';
+    card.innerHTML = `
+      <div class="flex justify-between items-center mb-2">
+        <div class="font-semibold">${course.title}</div>
+        <button class="text-xs bg-edulink text-white px-2 py-1 rounded" onclick="openCourseDetail('${course.id}')">View</button>
+      </div>
+      <div class="text-xs text-gray-500 mb-1">Progress: ${Math.round(en.progress * 100)}%</div>
+      <div class="w-full bg-gray-200 h-2 rounded"><div style="width:${en.progress * 100}%" class="h-2 bg-edulink rounded"></div></div>
+    `;
+    coursesList.appendChild(card);
+  });
+
+  // Render Assignments
+  const myAssignments = state.assignments.filter(a => a.userId === studentId && a.status === 'Pending');
+  assignmentsList.innerHTML = myAssignments.length === 0 ? '<p class="text-gray-500">No upcoming assignments.</p>' : '';
+  myAssignments.forEach(a => {
+    const course = state.courses.find(c => c.id === a.courseId);
+    const item = document.createElement('div');
+    item.className = 'p-2 border-l-4 border-accent rounded';
+    item.innerHTML = `
+      <div class="font-semibold text-sm">${a.title}</div>
+      <div class="text-xs text-gray-500">Due: ${a.dueDate} | ${course.title}</div>
+    `;
+    assignmentsList.appendChild(item);
+  });
+
+  // Render Feedback
+  const myFeedback = state.feedback.filter(f => f.userId === studentId);
+  feedbackList.innerHTML = myFeedback.length === 0 ? '<p class="text-gray-500">No feedback yet.</p>' : '';
+  myFeedback.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'p-2 border-l-4 border-edulink rounded';
+    item.innerHTML = `
+      <div class="text-sm">"${f.text}"</div>
+      <div class="text-xs text-gray-500 text-right">- ${f.from}</div>
+    `;
+    feedbackList.appendChild(item);
+  });
+  
+  // Populate feedback course dropdown
+  const feedbackCourseSelect = document.getElementById('feedback-course');
+  feedbackCourseSelect.innerHTML = '<option value="">Select a course</option>';
+  myEnrolls.forEach(en => {
+    const course = state.courses.find(c => c.id === en.courseId);
+    feedbackCourseSelect.innerHTML += `<option value="${course.id}">${course.title}</option>`;
+  });
+
+  // Render Quizzes
+  const quizzesList = document.getElementById('student-quizzes-list');
+  const myCourseIds = myEnrolls.map(e => e.courseId);
+  const myQuizzes = state.quizzes.filter(q => myCourseIds.includes(q.courseId));
+  quizzesList.innerHTML = myQuizzes.length === 0 ? '<p class="text-gray-500">No quizzes available.</p>' : '';
+  myQuizzes.forEach(q => {
+    const course = state.courses.find(c => c.id === q.courseId);
+    const item = document.createElement('div');
+    item.className = 'p-2 border-l-4 border-blue-500 rounded flex justify-between items-center';
+    item.innerHTML = `
+      <div>
+        <div class="font-semibold text-sm">${q.title}</div>
+        <div class="text-xs text-gray-500">${course.title}</div>
+      </div>
+      <button class="text-xs bg-blue-500 text-white px-2 py-1 rounded" onclick="openQuiz('${q.id}')">Start Quiz</button>
+    `;
+    quizzesList.appendChild(item);
+  });
+
+  // Render Overall Progress
+  const totalCourses = myEnrolls.length;
+  const totalProgress = myEnrolls.reduce((sum, en) => sum + en.progress, 0);
+  const avgProgress = totalCourses > 0 ? Math.round((totalProgress / totalCourses) * 100) : 0;
+  overallProgress.innerHTML = `
+    <div class="text-center">
+      <div class="text-3xl font-bold text-edulink">${avgProgress}%</div>
+      <div class="text-sm text-gray-500">Average progress across ${totalCourses} courses.</div>
+    </div>
+  `;
+}
+
+/* ===========================
+   Teacher Dashboard
+   =========================== */
+function renderTeacherDashboard() {
+  if (!state.currentUser || state.currentUser.role !== 'teacher') {
+    document.getElementById('teacher-dashboard-page').innerHTML =
+      '<div class="text-red-500">Please login as a teacher to view this dashboard.</div>';
+    return;
+  }
+
+  const teacherName = state.currentUser.name;
+  const coursesList = document.getElementById('teacher-courses-list');
+  const totalCoursesEl = document.getElementById('teacher-total-courses');
+  const totalStudentsEl = document.getElementById('teacher-total-students');
+
+  const myCourses = state.courses.filter(c => c.instructor === teacherName);
+  let totalStudents = 0;
+
+  coursesList.innerHTML = myCourses.length === 0 ? '<p class="text-gray-500">You are not teaching any courses.</p>' : '';
+  myCourses.forEach(course => {
+    const studentsInCourse = state.enrollments.filter(e => e.courseId === course.id).length;
+    totalStudents += studentsInCourse;
+    const card = document.createElement('div');
+    card.className = 'p-3 border rounded';
+    card.innerHTML = `
+      <div class="font-semibold">${course.title}</div>
+      <div class="text-sm text-gray-600">Students Enrolled: ${studentsInCourse}</div>
+    `;
+    coursesList.appendChild(card);
+  });
+
+  totalCoursesEl.textContent = myCourses.length;
+  totalStudentsEl.textContent = totalStudents;
+
+  // Render Feedback
+    const feedbackList = document.getElementById('teacher-feedback-list');
+    const myCourseIds = myCourses.map(c => c.id);
+    const myFeedback = state.feedback.filter(f => myCourseIds.includes(f.courseId));
+    feedbackList.innerHTML = myFeedback.length === 0 ? '<p class="text-gray-500">No feedback yet.</p>' : '';
+    myFeedback.forEach(f => {
+        const course = state.courses.find(c => c.id === f.courseId);
+        const student = state.users.find(u => u.id === f.userId);
+        const item = document.createElement('div');
+        item.className = 'p-2 border-l-4 border-edulink rounded';
+        item.innerHTML = `
+      <div class="text-sm">"${f.text}"</div>
+      <div class="text-xs text-gray-500 text-right">- ${student.name} on ${course.title}</div>
+    `;
+        feedbackList.appendChild(item);
+    });
+}
+
+/* ===========================
+   Parent Dashboard
+   =========================== */
+function renderParentDashboard(){
+  if(!state.currentUser || state.currentUser.role !== 'parent'){ document.getElementById('parent-dashboard-page').innerHTML = '<div class="text-red-500">Please login as a parent to view this dashboard.</div>'; return; }
+  const parentId = state.currentUser.id;
+  const linked = state.currentUser.linkedChildren || [];
+  const area = document.getElementById('linked-children-area');
+  area.innerHTML = '';
+  if(linked.length===0) area.innerHTML = '<div class="text-sm text-gray-500">No linked children yet.</div>';
+  linked.forEach(childId => {
+    const child = mock.users.find(u=>u.id===childId);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'p-3 border rounded mb-3';
+    // child's courses & progress
+    const childEnrolls = mock.enrollments.filter(e=>e.userId===childId);
+    wrapper.innerHTML = `<div class='font-semibold mb-2'>${child.name} <span class='text-xs text-gray-500'>(${child.linkCode})</span></div><div class='text-sm text-gray-600 mb-2'>Courses: ${childEnrolls.length}</div><div>${childEnrolls.map(e=>{ const c = mock.courses.find(x=>x.id===e.courseId); return `<div class=\"text-sm\">${c.title} - ${(Math.round(e.progress*100))}%</div>` }).join('')}</div>`;
+    area.appendChild(wrapper);
+  });
+
+  // weekly summary simulated
+  const weekly = document.getElementById('parent-weekly-summary');
+  const totalStudy = linked.reduce((sum, cid)=>{
+    // simulate 2-10 hours per child
+    return sum + Math.floor(2 + Math.random()*8);
+  }, 0);
+  weekly.innerHTML = `<div class='text-sm'>Total Study Time This Week: <strong>${totalStudy} hrs</strong></div><div class='mt-3 text-sm text-gray-600'>Recent activity: ${mock.activities.filter(a=>linked.includes(a.userId)).slice(0,5).map(a=>a.text).join('; ') || 'No recent activity'}</div>`;
+}
+
+async function linkChild(){
+  if(!state.currentUser || state.currentUser.role !== 'parent'){ showToast('Please login as a parent', 'error'); return; }
+  const code = document.getElementById('child-link-code').value.trim();
+  if(!code){ showToast('Enter a child link code', 'error'); return; }
+  // find child by code
+  const child = mock.users.find(u => u.linkCode === code && u.role === 'student');
+  if(!child){ showToast('Child not found', 'error'); return; }
+  // link
+  state.currentUser.linkedChildren = state.currentUser.linkedChildren || [];
+  if(state.currentUser.linkedChildren.includes(child.id)){ showToast('Child already linked', 'error'); return; }
+  state.currentUser.linkedChildren.push(child.id);
+  showToast('Child linked: ' + child.name);
+  renderParentDashboard();
+}
+
+/* ===========================
+   Search from hero
+   =========================== */
+function searchFromHero(){
+  const q = document.getElementById('home-search').value.trim().toLowerCase();
+  if(!q) return navigateTo('courses-page');
+  // simple search: set subject filter if matches subject, otherwise show results
+  document.getElementById('filter-subject').value = '';
+  navigateTo('courses-page');
+  setTimeout(()=>{
+    const filtered = mock.courses.filter(c => c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q) || c.subject.toLowerCase().includes(q));
+    const list = document.getElementById('courses-list');
+    list.innerHTML = '';
+    document.getElementById('courses-count').innerText = filtered.length;
+    filtered.forEach(c => list.appendChild(createCourseCard(c)));
+  }, 200);
+}
+
+/* ===========================
+   Init
+   =========================== */
+function openQuiz(quizId) {
+  navigateTo('quiz-page');
+  const quiz = state.quizzes.find(q => q.id === quizId);
+  const quizContent = document.getElementById('quiz-content');
+  quizContent.innerHTML = '';
+  if (!quiz) {
+    quizContent.innerHTML = '<div class="text-red-500">Quiz not found.</div>';
+    return;
+  }
+
+  let currentQuestionIndex = 0;
+  let score = 0;
+
+  function renderQuestion() {
+    const question = quiz.questions[currentQuestionIndex];
+    quizContent.innerHTML = `
+      <h3 class="text-xl font-semibold mb-4">${quiz.title}</h3>
+      <p class="text-gray-700 mb-4">${question.q}</p>
+      <div class="space-y-2">
+        ${question.options.map(option => `
+          <button class="w-full text-left p-3 border rounded hover:bg-gray-100" onclick="checkAnswer('${option}')">${option}</button>
+        `).join('')}
+      </div>
+      <div class="mt-4 text-sm text-gray-500">Question ${currentQuestionIndex + 1} of ${quiz.questions.length}</div>
+    `;
+  }
+
+  window.checkAnswer = (selectedOption) => {
+    const question = quiz.questions[currentQuestionIndex];
+    if (selectedOption === question.answer) {
+      score++;
+      showToast('Correct!', 'success');
+    } else {
+      showToast(`Wrong! The correct answer is ${question.answer}`, 'error');
+    }
+
+    currentQuestionIndex++;
+    if (currentQuestionIndex < quiz.questions.length) {
+      renderQuestion();
+    } else {
+      quizContent.innerHTML = `
+        <h3 class="text-xl font-semibold mb-4">Quiz Complete!</h3>
+        <p class="text-gray-700 mb-4">You scored ${score} out of ${quiz.questions.length}.</p>
+        <button class="px-4 py-2 rounded bg-edulink text-white" onclick="navigateTo('student-dashboard-page')">Back to Dashboard</button>
+      `;
+    }
+  }
+
+  renderQuestion();
+}
+(async function init(){
+  // load initial mock datasets
+  state.courses = mock.courses;
+  state.users = mock.users;
+  state.enrollments = mock.enrollments;
+  state.assignments = mock.assignments;
+  state.feedback = mock.feedback;
+  state.activities = mock.activities;
+  state.quizzes = mock.quizzes;
+  await tryRestoreSession();
+  renderHeaderUser();
+  renderHome();
+
+  // Open login modal if not logged in
+  if (!state.currentUser) {
+    openAuthModal('login');
+  }
+})();
+
+// Function to toggle between login and registration inside modal
+function toggleAuthMode(mode) {
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const loginTab = document.getElementById('login-tab');
+  const registerTab = document.getElementById('register-tab');
+
+  if (mode === 'login') {
+    loginForm.classList.remove('hidden');
+    registerForm.classList.add('hidden');
+    loginTab.classList.add('border-b-2', 'border-blue-600', 'text-blue-600');
+    registerTab.classList.remove('border-b-2', 'border-blue-600', 'text-blue-600');
+  } else {
+    loginForm.classList.add('hidden');
+    registerForm.classList.remove('hidden');
+    registerTab.classList.add('border-b-2', 'border-blue-600', 'text-blue-600');
+    loginTab.classList.remove('border-b-2', 'border-blue-600', 'text-blue-600');
+  }
+}
+</script>
+</body>
+</html>
