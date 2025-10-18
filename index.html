@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -276,11 +275,11 @@
       <div class="md:col-span-1 space-y-6">
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="font-semibold text-gray-600">Total Courses</h3>
-          <p id="teacher-total-courses" class="text-3xl font-bold text-edulink">0</p>
+          <p id="teacher-total-courses" class="text-3xl font-bold text-edulink">10</p>
         </div>
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="font-semibold text-gray-600">Total Students</h3>
-          <p id="teacher-total-students" class="text-3xl font-bold text-accent">0</p>
+          <p id="teacher-total-students" class="text-3xl font-bold text-accent">140</p>
         </div>
       </div>
       <!-- My Courses List -->
@@ -393,7 +392,7 @@ const API_BASE_URL = 'https://edulink-lms.onrender.com'; // <- replace with your
 const mock = {
   users: [
     { id: 'u_student_1', name: 'P.Venky', email: 'Venky@student.com', role: 'student', token: 'token_student_1', linkCode: 'EDU1234' },
-    { id: 'u_student_2', name: 'Bhavna Singh', email: 'bhavna@student.com', role: 'student', token: 'token_student_2', linkCode: 'EDU12345' },
+    { id: 'u_student_2', name: 'Bhavani ', email: 'bhavna@student.com', role: 'student', token: 'token_student_2', linkCode: 'EDU12345' },
     { id: 'u_student_3', name: 'Chetan Kumar', email: 'chetan@student.com', role: 'student', token: 'token_student_3', linkCode: 'EDU1234567' },
     { id: 'u_student_4', name: 'Divya Reddy', email: 'divya@student.com', role: 'student', token: 'token_student_4', linkCode: 'STU3456' },
     { id: 'u_teacher_1', name: 'Dr. Priya Rao', email: 'priya@teacher.com', role: 'teacher', token: 'token_teacher_1' },
@@ -1256,3 +1255,4 @@ function toggleAuthMode(mode) {
 </script>
 </body>
 </html>
+
